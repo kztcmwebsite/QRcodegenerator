@@ -1,52 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>QR Code Generator</title>
+
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #2b5876, #4e4376);
+      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px;
+      padding: 40px 20px;
+      min-height: 100vh;
     }
+
     h1 {
-      color: #333;
+      font-size: 2rem;
+      color: #ffffff;
+      margin-bottom: 30px;
     }
+
     #qrForm {
       margin-bottom: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
     }
+
     input[type="text"] {
-      padding: 10px;
+      padding: 12px;
       font-size: 16px;
       width: 300px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
     }
+
     button {
-      padding: 10px 20px;
-      background: #007bff;
+      padding: 12px 24px;
+      background: linear-gradient(to right, #00c6ff, #0072ff);
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 30px;
       cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
+
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(to right, #0072ff, #00c6ff);
+    }
+
     canvas {
       margin-top: 20px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
     }
+
+    .download-links {
+      margin-top: 15px;
+      display: flex;
+      gap: 12px;
+    }
+
     a {
-      margin-top: 10px;
-      display: inline-block;
       text-decoration: none;
-      color: #007bff;
+      color: #fff;
+      background: #1dd1a1;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    a:hover {
+      background: #10ac84;
     }
   </style>
 </head>
@@ -60,33 +99,62 @@
   </div>
 
   <div id="qrcode"></div>
-  <a id="downloadLink" style="display: none;" download="qrcode.png">Download QR Code</a>
+
+  <div class="download-links">
+    <a id="downloadLink" style="display: none;">Download QR Code</a>
+    <a id="downloadPDFLink" href="#" onclick="downloadPDF()" style="display: none;">Download PDF of QR Code</a>
+  </div>
 
   <script>
+    let currentCanvas = null;
+    let lastEnteredText = "";
+
+    function sanitizeFilename(input) {
+      return input.replace(/[\/\\?%*:|"<>]/g, "_").substring(0, 50);
+    }
+
     function generateQRCode() {
       const text = document.getElementById("text").value.trim();
       const qrcodeDiv = document.getElementById("qrcode");
       const downloadLink = document.getElementById("downloadLink");
+      const pdfLink = document.getElementById("downloadPDFLink");
 
-      qrcodeDiv.innerHTML = ""; // Clear previous QR code
+      qrcodeDiv.innerHTML = "";
       if (!text) {
         alert("Please enter some text");
         return;
       }
+
+      lastEnteredText = sanitizeFilename(text);
 
       QRCode.toCanvas(text, { width: 200 }, function (err, canvas) {
         if (err) {
           console.error(err);
           return;
         }
+        currentCanvas = canvas;
         qrcodeDiv.appendChild(canvas);
-        // Convert canvas to image and prepare download link
+
         const dataUrl = canvas.toDataURL("image/png");
         downloadLink.href = dataUrl;
+        downloadLink.download = `${lastEnteredText}.png`;
         downloadLink.style.display = "inline-block";
+        pdfLink.style.display = "inline-block";
       });
+    }
+
+    function downloadPDF() {
+      if (!currentCanvas || !lastEnteredText) return;
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+
+      const imgData = currentCanvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 40, 40, 120, 120);
+      pdf.save(`${lastEnteredText}.pdf`);
     }
   </script>
 
 </body>
 </html>
+
